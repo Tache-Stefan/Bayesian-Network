@@ -104,3 +104,13 @@ class DataProcessor:
         
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self.data.to_csv(output_path, index=False)
+
+
+    def pipeline(self, output_path):
+        """
+        Runs the full data processing pipeline: load, rename, discretize, and save.
+        """
+        self.load_data()
+        self.rename_columns()
+        self.discretize_data()
+        self.save_processed_data(output_path)

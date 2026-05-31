@@ -1,104 +1,55 @@
-class ProbabilityCalculator:
-    def __init__(self, data, dag=None):
-        """
-        Initialize with data and optional DAG structure.
-        """
+import pandas as pd
+import os
+
+class BayesianNetworkTables:
+    def __init__(self, data, dag):
         self.data = data
         self.dag = dag
-        self.cpt = {}
+        self.cpts = {}
         self._build_cpts()
-    
+        
     def _build_cpts(self):
-        """Build conditional probability tables from data."""
-        for col in self.data.columns:
-            self.cpt[col] = self.data[col].value_counts(normalize=True).to_dict()
-    
-    def marginal_probability(self, variable, value):
-        """
-        Get P(variable = value).
-        """
-        if variable not in self.cpt:
-            raise ValueError(f"Variable {variable} not found")
-        
-        return self.cpt[variable].get(value, 0.0)
-    
-    def conditional_probability(self, target_var, target_val, evidence):
-        """
-        Get P(target_var = target_val | evidence).
-        """
-        filtered_data = self.data.copy()
-        
-        for var, val in evidence.items():
-            filtered_data = filtered_data[filtered_data[var] == val]
-        
-        if len(filtered_data) == 0:
-            return 0.0
-        
-        matches = filtered_data[filtered_data[target_var] == target_val]
-        
-        return len(matches) / len(filtered_data)
-    
-    def query(self, target_var, target_val, evidence=None):
-        """
-        Simple query interface.
-        """
-        if evidence is None or len(evidence) == 0:
-            return self.marginal_probability(target_var, target_val)
-        else:
-            return self.conditional_probability(target_var, target_val, evidence)
-    
-class ProbabilityCalculatorWithDAG(ProbabilityCalculator):
-    def __init__(self, data, dag):
-        super().__init__(data, dag)
-    
-    def _build_cpts(self):
-        """Build conditional probability tables from data using DAG structure."""
+        """Calculates the CPTs for each node."""
         for node in self.dag.nodes:
             parents = self.dag.get_parents(node)
             
             if not parents:
-                self.cpt[node] = self.data[node].value_counts(normalize=True).to_dict()
+                self.cpts[node] = self.data[node].value_counts(normalize=True).sort_index().to_dict()
             else:
-                self.cpt[node] = {}
-                # Group by parents and calculate probabilities for each group
+                self.cpts[node] = {}
+                
                 for parent_combo, group in self.data.groupby(parents):
-                    counts = group[node].value_counts()
-                    total = counts.sum()
+                    # Ensure key is tuple
+                    parent_key = parent_combo if isinstance(parent_combo, tuple) else (parent_combo,)
                     
-                    # Handle single parent (parent_combo won't be a tuple)
-                    if not isinstance(parent_combo, tuple):
-                        key = (parent_combo,)
-                    else:
-                        key = parent_combo
+                    counts = group[node].value_counts(normalize=True).sort_index()
+                    self.cpts[node][parent_key] = counts.to_dict()
+
+    def output_tables(self):
+        """Outputs the CPTs and writes to output/CPT.txt."""
+        os.makedirs('output', exist_ok=True)
+        
+        with open('output/CPT.txt', 'w') as f:
+            for node in self.dag.nodes:
+                f.write(f"\n" + "="*50 + "\n")
+                f.write(f" CPT FOR THE NODE: '{node}'\n")
+                f.write("="*50 + "\n")
+                
+                parents = self.dag.get_parents(node)
+                
+                if not parents:
+                    df_marginal = pd.DataFrame(list(self.cpts[node].items()), columns=[node, 'Probability'])
+                    f.write(df_marginal.to_string(index=False) + "\n")
+                else:
+                    table_data = []
                     
-                    # Store conditional probabilities
-                    self.cpt[node][key] = (counts / total).to_dict()
-    
-    def conditional_probability(self, target_var, target_val, evidence):
-        """
-        Get P(target_var = target_val | evidence) using only relevant parents.
-        """
-        parents = self.dag.get_parents(target_var)
-        relevant_evidence = {p: evidence[p] for p in parents if p in evidence}
-        
-        if not relevant_evidence:
-            # Use marginal probability if no relevant parents in evidence
-            return self.data[self.data[target_var] == target_val].shape[0] / len(self.data)
-        
-        filtered_data = self.data.copy()
-        for var, val in relevant_evidence.items():
-            filtered_data = filtered_data[filtered_data[var] == val]
-        
-        if len(filtered_data) == 0:
-            return 0.0
-        
-        matches = filtered_data[filtered_data[target_var] == target_val]
-        return len(matches) / len(filtered_data)
-    
-    def query(self, target_var, target_val, evidence=None):
-        """Simple query using the graph structure."""
-        if evidence is None or len(evidence) == 0:
-            return self.data[self.data[target_var] == target_val].shape[0] / len(self.data)
-        else:
-            return self.conditional_probability(target_var, target_val, evidence)
+                    for parent_key, node_distribution in self.cpts[node].items():
+                        for node_val, prob in node_distribution.items():
+                            row = list(parent_key) + [node_val, prob]
+                            table_data.append(row)
+                    
+                    columns = list(parents) + [node, 'Probability']
+                    df_cpt = pd.DataFrame(table_data, columns=columns)
+                    df_cpt = df_cpt.sort_values(by=list(parents) + [node])
+                    f.write(df_cpt.to_string(index=False) + "\n")
     
