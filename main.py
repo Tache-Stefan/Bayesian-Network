@@ -6,11 +6,11 @@ from src.scoring import BicScore
 from src.probability import BayesianNetworkTables
 from graphviz import Digraph
 
-DataProcessor = DataProcessor("data/raw/heart.csv")
-DataProcessor.pipeline("data/processed/heart_discrete.csv")
+# DataProcessor = DataProcessor("data/raw/heart.csv")
+# DataProcessor.pipeline("data/processed/heart_discrete.csv")
 data = pd.read_csv("data/processed/heart_discrete.csv")
 
-mmpc = MMPC(data, alpha=0.05)
+mmpc = MMPC(data)
 skeleton = mmpc.get_skeleton()
 
 hc = HillClimbSearch(list(data.columns), BicScore(data))
