@@ -61,28 +61,24 @@ class DataProcessor:
             labels=['0-45', '45-55', '55-65', '65+']
         )
 
-        # Resting blood pressure
         df_processed['Resting Blood Pressure'] = pd.cut(
             df_processed['Resting Blood Pressure'],
             bins=[0, 120, 140, 200],
             labels=['Normal', 'Prehypertension', 'Hypertension']
         )
 
-        # Serum cholesterol
         df_processed['Cholesterol Level'] = pd.cut(
             df_processed['Cholesterol Level'],
             bins=[0, 200, 240, 600],
             labels=['Optimal', 'Borderline', 'High']
         )
 
-        # Maximum heart rate achieved
         df_processed['Maximum Heart Rate'] = pd.cut(
             df_processed['Maximum Heart Rate'],
             bins=[0, 110, 150, 220],
             labels=['Low', 'Normal', 'High']
         )
 
-        # ST depression induced by exercise
         df_processed['ST Depression'] = pd.cut(
             df_processed['ST Depression'], 
             bins=[-1, 0.5, 1.5, 10], 
