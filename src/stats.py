@@ -21,6 +21,7 @@ def g_square_test(data, x, y, z=[], alpha=0.05):
             obs = row['N_xyz']
             exp = (nx[row[x]] * ny[row[y]]) / total_n
             g2 += obs * np.log(obs / exp) if exp > 0 else 0
+        g2 *= 2
         
         df = (data[x].nunique() - 1) * (data[y].nunique() - 1)
     else:
@@ -29,13 +30,13 @@ def g_square_test(data, x, y, z=[], alpha=0.05):
         nyz = data.groupby([y] + z).size().reset_index(name='N_yz')
         merged = counts.merge(nxz, on=[x]+z).merge(nyz, on=[y]+z).merge(nz, on=z)
 
-        g2_val = 0
+        g2 = 0
         for _, row in merged.iterrows():
             obs = row['N_xyz']
             exp = (row['N_xz'] * row['N_yz']) / row['N_z']
             if obs > 0 and exp > 0:
-                g2_val += obs * np.log(obs / exp)
-        g2 = 2 * g2_val
+                g2 += obs * np.log(obs / exp)
+        g2 *= 2
 
         df = (data[x].nunique() - 1) * (data[y].nunique() - 1)
         for col in z:
