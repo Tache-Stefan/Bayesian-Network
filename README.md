@@ -91,6 +91,35 @@ $$P(X | \text{Parents}(X)) = \frac{\text{count}(X, \text{Parents}(X))}{\text{cou
 
 Rezultatele sunt salvate în `output/CPT.txt`.
 
+### Faza 5: Inferență Probabilistică
+
+**Fișier**: `src/inference.py`
+
+După învățarea structurii și calculul CPT-urilor, proiectul permite interogări de tip:
+
+- probabilitate punctuală: $P(Q=q \mid E)$
+- distribuție completă pentru o variabilă: $P(Q \mid E)$
+
+Inferența este implementată prin enumerare exactă a tuturor combinațiilor variabilelor neconstrânse, pe baza tabelelor CPT învățate.
+
+#### Formula utilizată
+
+$$
+P(Q=q \mid E) = \frac{P(Q=q, E)}{P(E)}
+$$
+
+unde:
+- $P(Q=q, E)$ se obține prin sumarea probabilităților scenariilor compatibile cu query-ul și evidența
+- $P(E)$ se obține similar, fără fixarea variabilei interogate
+
+Pentru o asignare completă a nodurilor, probabilitatea comună este:
+
+$$
+P(X_1, ..., X_n) = \prod_{i=1}^{n} P(X_i \mid Parents(X_i))
+$$
+
+Rezultatele interogărilor sunt salvate în `output/inference.txt`, iar interogările repetate sunt servite din cache.
+
 ---
 
 ## Structura Proiectului
@@ -111,10 +140,12 @@ Bayesian-Network/
 │   ├── graph.py                    # Structura de date DAG
 │   ├── scoring.py                  # Calculul scorului BIC
 │   ├── probability.py              # Calculul CPT
+│   ├── inference.py                # Inferență probabilistică pe rețeaua învățată
 │   └── stats.py                    # Teste statistice 
 └── output/
     ├── bayes_net.png               # Reprezentare vizuală a rețelei
-    └── CPT.txt                     # Tabelele de probabilitate condiționată
+    ├── CPT.txt                     # Tabelele de probabilitate condiționată
+    └── inference.txt               # Rezultatele interogărilor de inferență
 ```
 
 ## Instalare și Utilizare
