@@ -4,6 +4,7 @@ from src.mmpc import MMPC
 from src.hill_climbing import HillClimbSearch
 from src.scoring import BicScore
 from src.probability import BayesianNetworkTables
+from src.inference import BayesianNetworkInference
 from graphviz import Digraph
 
 # DataProcessor = DataProcessor("data/raw/heart.csv")
@@ -29,3 +30,10 @@ bn_tables = BayesianNetworkTables(data, final_dag)
 bn_tables.output_tables()
 
 print("Bayesian Network structure and CPTs have been generated and saved to the output directory.")
+
+inference = BayesianNetworkInference(bn_tables)
+inference.query("Heart Disease", value=1, evidence={"Age": "45-55", "Cholesterol Level": "High"})
+inference.query("Heart Disease", value=1, evidence={"Age": "65+"})
+inference.query("Heart Disease")
+
+print("Inference results have been saved to output/inference.txt")
